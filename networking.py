@@ -7,7 +7,6 @@ import json
 import time
 
 localPort = 8000
-localHost = "localhost"
 connected_peers = []
 connection_ports = []
 
@@ -104,7 +103,7 @@ class Receive_Connection(threading.Thread):
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   
   def run(self):
-    self.socket.bind((localHost, localPort))
+    self.socket.bind(("", localPort))
     self.socket.listen(10)
     
     while True:
@@ -140,8 +139,6 @@ class Receive_Connection(threading.Thread):
         print("Receive Connection Error.  Received invalid request to port listening for requests")
         print(response)
       
-
-  
 def print_menu():
   global connected_peers
   print("You are presently connected to " + str(connection_ports) + " peers")
