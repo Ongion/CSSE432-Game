@@ -1,8 +1,30 @@
+import math
+
+WIDTH = 640
+HEIGHT = 480
 FRAME_PERIOD = 1000/60
 A_SHIP = 10
 V_SHIPTURN = 5
 V_LASER = 10
 LASER_LENGTH = 10
+
+START_CIRCLE_RADIUS = 30
+
+class GameState:
+
+	def __init__(self, numPlayers):
+		self.numPlayers = numPlayers
+		self.width = WIDTH
+		self.height = HEIGHT
+		self.ships = []
+		centerX = self.width/2
+		centerY = self.height/2
+		for i in range(numPlayers):
+			# Start all the players out in a circle around the center, facing outwards
+			offsetY = START_CIRCLE_RADIUS * math.cos(2 * math.pi * i / numPlayers)
+			offsetX = START_CIRCLE_RADIUS * math.sin(2 * math.pi * i / numPlayers)
+			self.ships[i] = Spaceship(self, centerX + offsetX, centerY + offsetY, 2 * math.pi * i / numPlayers, i)
+		self.lasers = []
 
 
 class Spaceship:
