@@ -8,9 +8,9 @@ from tkinter import Tk, Canvas, Frame, BOTH
 
 WIDTH = 1000
 HEIGHT = 1000
-DELAY = 100
+DELAY = 10
 SPEED = 10
-ASPEED = math.pi/10
+ASPEED = math.pi/30
 LSPEED = 10
 
 class Board(Canvas):
@@ -20,11 +20,12 @@ class Board(Canvas):
             background="black", highlightthickness=0)
          
         self.parent = parent 
-        self.ship = Spaceship(50,50)
-        self.lasers = []
-        self.ships = [self.ship,Spaceship(100,50)]
-        
+        self.ship = Spaceship(50,50,self.create_line(0,0,0,0))
         self.initUI()
+        self.lasers = []
+        self.ships = [self.ship,Spaceship(100,50,self.create_line(0,0,0,0))]
+        
+
         self.bind_all("<Key>",self.onKeyPressed)
         self.after(DELAY, self.onTimer)
         self.pack()        
@@ -33,7 +34,7 @@ class Board(Canvas):
         points = [self.ship.x,self.ship.y,
                   self.ship.x-self.ship.length*math.cos(self.ship.angle+self.ship.innerAngle),self.ship.y+self.ship.length*math.sin(self.ship.angle+self.ship.innerAngle),
                   self.ship.x-self.ship.length*math.cos(self.ship.angle-self.ship.innerAngle),self.ship.y+self.ship.length*math.sin(self.ship.angle-self.ship.innerAngle)]
-        self.create_polygon(points,outline = 'white',tag='ship')
+        self.ship.triangle = self.create_polygon(points,outline = 'white',tag='ship')
     
     def moveShip(self):
         oldShips = self.find_withtag("ship");
@@ -55,7 +56,7 @@ class Board(Canvas):
                   self.ships[z].x-self.ships[z].length*math.cos(self.ships[z].angle+self.ships[z].innerAngle),self.ships[z].y+self.ships[z].length*math.sin(self.ships[z].angle+self.ship.innerAngle),
                   self.ships[z].x-self.ships[z].length*math.cos(self.ships[z].angle-self.ships[z].innerAngle),self.ships[z].y+self.ships[z].length*math.sin(self.ships[z].angle-self.ship.innerAngle)]
     
-            self.create_polygon(points,outline = 'white',tag='ship')
+            self.ships[z].triangle =  self.create_polygon(points,outline = 'white',tag='ship')
             z+=1
         
         for s in oldShips:
@@ -91,7 +92,7 @@ class Board(Canvas):
         Lwidth = 25
         Lhieght = 10
         x = self.create_line(ship.x,ship.y,
-                              ship.x-Lhieght*math.cos(ship.angle)+Lwidth*math.cos(ship.angle),ship.y-Lwidth*math.sin(ship.angle)-Lhieght*math.sin(ship.angle),
+                              ship.x+Lhieght*math.cos(ship.angle)+Lwidth*math.cos(ship.angle),ship.y-Lwidth*math.sin(ship.angle)-Lhieght*math.sin(ship.angle),
                               fill = 'white',tag='laser')
         las = Laser(ship.angle,x)
         self.lasers.append(las)
@@ -109,12 +110,9 @@ class Board(Canvas):
             Lc = self.coords(l)
             overlap = self.find_overlapping(Lc[0],Lc[1],Lc[2],Lc[3])
             for over in overlap:
-                print(self.gettags(over))
-                if self.gettags(over) ==('laser'):
-                    print("true")
-                    c = self.coords(over)
+                if self.gettags(over)[0]=='laser':
                     for ship in self.ships:
-                        if c[0] == ship.x:
+                        if l == ship.triangle:
                             self.ships.remove(ship)
                             break
                         self.delete(over)
@@ -139,7 +137,7 @@ class Spaceship:
     length = 50
     innerAngle = math.pi/6
     
-    def __init__(self,startX,startY):
+    def __init__(self,startX,startY,tri):
         self.x = startX
         self.y = startY
         self.vx = 0
@@ -147,6 +145,7 @@ class Spaceship:
         self.angle = 0
         self.fire = False
         self.timestep = DELAY/1000
+        self.triangle = tri
     
     def addVel(self,x):
         self.vx = self.vx + x*math.cos(self.angle)
