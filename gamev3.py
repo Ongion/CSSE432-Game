@@ -23,6 +23,7 @@ class GameState:
 		self.ships = []
 		self.lives = [3 for x in range(numPlayers)]
 		self.spriteShips = pygame.sprite.Group()
+		self.spriteLasers = pygame.sprite.Group()
 		centerX = self.width/2
 		centerY = self.height/2
 		for i in range(numPlayers):
@@ -40,7 +41,7 @@ class GameState:
 			laser.update()
 		# APPLY COLLISION DETECTION HERE
 		# Now, remove the lasers that are offscreen!
-		#self.lasers = [laser for laser in lasers if not laser.isOffScreen()]
+		self.lasers = [laser for laser in self.lasers if not laser.isOffScreen()]
 
 
 class Spaceship(pygame.sprite.Sprite):
@@ -61,19 +62,15 @@ class Spaceship(pygame.sprite.Sprite):
 		self.rect.x = self.x
 		self.rect.y = self.y
 		pygame.draw.polygon(self.original,WHITE,self.points(),0)
-		self.image = pygame.transform.rotate(self.original,self.angle*180/math.pi)
+		self.image = pygame.transform.rotate(self.original,-self.angle*180/math.pi)
 
 		
-		
-
-
 	def points(self):
 		return ((SHIP_LENGTH/2+math.sqrt(3)/3*SHIP_LENGTH,SHIP_LENGTH/2),
 			(SHIP_LENGTH/2+math.sqrt(3)/3*SHIP_LENGTH*math.cos(math.pi-SHIP_ANGLE),SHIP_LENGTH/2+math.sqrt(3)/3*SHIP_LENGTH*math.sin(math.pi-SHIP_ANGLE)),
 			(SHIP_LENGTH/2+math.sqrt(3)/3*SHIP_LENGTH*math.cos(math.pi+SHIP_ANGLE),SHIP_LENGTH/2+math.sqrt(3)/3*SHIP_LENGTH*math.sin(math.pi+SHIP_ANGLE)))	
 			
 			
-
 	def applyInput(self, input):
 		self.rotationInput(input[0])
 		self.velocityInput(input[1])
@@ -91,7 +88,7 @@ class Spaceship(pygame.sprite.Sprite):
 		self.doScreenWraps()
 		self.rect.x = self.x
 		self.rect.y = self.y
-		self.image = pygame.transform.rotate(self.original,self.angle*180/math.pi)
+		self.image = pygame.transform.rotate(self.original,-self.angle*180/math.pi)
 
 	def doScreenWraps(self):
 		if self.x < -SHIP_LENGTH:
@@ -103,7 +100,7 @@ class Spaceship(pygame.sprite.Sprite):
 		elif self.y > self.game.height + SHIP_LENGTH:
 			self.y -= self.game.height + 2 * SHIP_LENGTH
 
-class Laser:
+class Laser(pygame.sprite.Sprite):
 	
 	def __init__(self, game, startX, startY, angle, playerNum):
 		self.game = game
@@ -111,10 +108,26 @@ class Laser:
 		self.y = startY
 		self.angle = angle
 		self.playerNum = playerNum
+		
+		super().__init__()
+		self.image = pygame.Surface((LASER_LENGTH,LASER_LENGTH))
+		self.rect = self.image.get_rect()
+		self.image.set_colorkey(BLACK)
+		self.rect.x = self.x
+		self.rect.y = self.y
+		pygame.draw.line(self.image,WHITE,self.points1(),self.points2(),1)
+	
+	def points1(self):
+		return (LASER_LENGTH/2 - LASER_LENGTH/2*math.cos(self.angle),LASER_LENGTH/2-LASER_LENGTH/2*math.sin(self.angle))
+	
+	def points2(self):
+		return (LASER_LENGTH/2 + LASER_LENGTH/2*math.cos(self.angle),LASER_LENGTH/2+LASER_LENGTH/2*math.sin(self.angle))
 
 	def update(self):
 		self.x += V_LASER * math.cos(self.angle)
 		self.y += V_LASER * math.sin(self.angle)
+		self.rect.x = self.x
+		self.rect.y = self.y
 
 	def isOffScreen(self):
 		xLen = LASER_LENGTH * math.cos(self.angle)
@@ -124,14 +137,18 @@ class Laser:
 def calculateMove(event,game):
 	rotate = accel = 0
 	if event.key == 276: #LEFT
-		rotate = .01
-	elif event.key == 275: #RIGHT
 		rotate = -.01
+	elif event.key == 275: #RIGHT
+		rotate = .01
 	elif event.key == 273: #UP
 		accel = .01
 	elif event.key == 274:#DOWN
 		accel = -.01
-		
+	elif event.key == 32:
+		laser = Laser(game,game.ships[0].rect.centerx,game.ships[0].rect.centery,game.ships[0].angle,game.ships[0].playerNum)
+		game.spriteLasers.add(laser)
+		game.lasers.append(laser)
+
 	game.ships[0].applyInput([rotate,accel])	
 	
 		
@@ -158,16 +175,6 @@ while True:
 	game.update()
 	screen.fill(BLACK)
 	game.spriteShips.draw(screen)
+	game.spriteLasers.draw(screen)
 	pygame.display.flip()
 	clock.tick(60)
-	
-	
-		
-
-
-
-
-
-
-
-
