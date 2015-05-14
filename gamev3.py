@@ -39,9 +39,10 @@ class GameState:
 			ship.update()
 		for laser in self.lasers:
 			laser.update()
-		# APPLY COLLISION DETECTION HERE
+		collision(self)
 		# Now, remove the lasers that are offscreen!
 		self.lasers = [laser for laser in self.lasers if not laser.isOffScreen()]
+		
 
 
 class Spaceship(pygame.sprite.Sprite):
@@ -151,6 +152,24 @@ def calculateMove(event,game):
 
 	game.ships[0].applyInput([rotate,accel])	
 	
+
+def collision(game):
+	for laser in game.spriteLasers:
+
+		# See if it hit a block
+		hit_list = pygame.sprite.spritecollide(laser, game.spriteShips, False)
+
+		# For each block hit, remove the bullet and add to the score
+		for ship in hit_list:
+			if(ship.playerNum != laser.playerNum):
+				print(ship)
+				game.spriteShips.remove(ship)
+				
+
+		# Remove the bullet if it flies up off the screen
+		if laser.isOffScreen():
+			game.spriteLasers.remove(laser)
+
 		
 #Main game
 
