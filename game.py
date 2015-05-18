@@ -8,7 +8,7 @@ from tkinter import Tk, Canvas, Frame, BOTH
 
 WIDTH = 1000
 HEIGHT = 1000
-DELAY = 100
+DELAY = 17
 SPEED = 10
 ASPEED = math.pi/10
 LSPEED = 10
@@ -24,43 +24,29 @@ class Board(Canvas):
         self.lasers = []
         self.ships = [self.ship,Spaceship(100,50)]
         
-        self.initUI()
         self.bind_all("<Key>",self.onKeyPressed)
         self.after(DELAY, self.onTimer)
         self.pack()        
     
-    def initUI(self):
-        points = [self.ship.x,self.ship.y,
-                  self.ship.x-self.ship.length*math.cos(self.ship.angle+self.ship.innerAngle),self.ship.y+self.ship.length*math.sin(self.ship.angle+self.ship.innerAngle),
-                  self.ship.x-self.ship.length*math.cos(self.ship.angle-self.ship.innerAngle),self.ship.y+self.ship.length*math.sin(self.ship.angle-self.ship.innerAngle)]
-        self.create_polygon(points,outline = 'white',tag='ship')
+    def updateUI(self):
+      self.updateShipUI()
+      updateLaserUI(self)
     
-    def moveShip(self):
+    def updateShipUI(self):
+        #delete previous ships from the UI
         oldShips = self.find_withtag("ship");
-        z = 0
-        while z<len(self.ships):
-            if self.ships[z].x <0:
-                self.ships[z].x = WIDTH
-            
-            if self.ships[z].x > WIDTH:
-                self.ships[z].x = 0
-            
-            if self.ships[z].y < 0:
-                self.ships[z].y = HEIGHT
-            
-            if self.ships[z].y > HEIGHT:
-                self.ships[z].y = 0
-            
-            points = [self.ships[z].x,self.ships[z].y,
-                  self.ships[z].x-self.ships[z].length*math.cos(self.ships[z].angle+self.ships[z].innerAngle),self.ships[z].y+self.ships[z].length*math.sin(self.ships[z].angle+self.ship.innerAngle),
-                  self.ships[z].x-self.ships[z].length*math.cos(self.ships[z].angle-self.ships[z].innerAngle),self.ships[z].y+self.ships[z].length*math.sin(self.ships[z].angle-self.ship.innerAngle)]
-    
-            self.create_polygon(points,outline = 'white',tag='ship')
-            z+=1
-        
         for s in oldShips:
             self.delete(s)
             
+        for s in self.ships:
+            self.create_polygon(s.points(),outline = 'white',tag='ship')
+    
+    def updateLaserUI(self):
+        for l in self.lasers:
+            self.move(self.lasers[x].drawing,LSPEED*math.cos(self.lasers[x].angle),-LSPEED*math.sin(self.lasers[x].angle))
+            
+            x = x+1
+    
     
     def onKeyPressed(self, e): 
     
@@ -97,13 +83,6 @@ class Board(Canvas):
         self.lasers.append(las)
         
         
-    def moveLasers(self):
-        x = 0
-        while x< len(self.lasers):
-            self.move(self.lasers[x].drawing,LSPEED*math.cos(self.lasers[x].angle),-LSPEED*math.sin(self.lasers[x].angle))
-            
-            x = x+1
-    
     def checkCollisions(self):
         for l in self.find_withtag("ship"):
             Lc = self.coords(l)
@@ -124,7 +103,7 @@ class Board(Canvas):
         
     def onTimer(self):
         self.ship.move()
-        self.moveShip()
+        self.updateUI()
         self.moveLasers()
         self.checkCollisions()
         
@@ -134,7 +113,6 @@ class Board(Canvas):
             
         self.after(DELAY, self.onTimer)
         
-
 class Spaceship:
     length = 50
     innerAngle = math.pi/6
@@ -155,6 +133,23 @@ class Spaceship:
     def move(self):
         self.x = self.x+self.vx*self.timestep
         self.y = self.y+self.vy*self.timestep
+        if self.x <0:
+            self.x = WIDTH
+        
+        if self.x > WIDTH:
+            self.x = 0
+        
+        if self.y < 0:
+            self.y = HEIGHT
+        
+        if self.y > HEIGHT:
+            self.y = 0
+            
+    def points(self):
+      return [self.x,self.y,
+                  self.x-self.length*math.cos(self.angle+self.innerAngle),self.y+self.length*math.sin(self.angle+self.innerAngle),
+                  self.x-self.length*math.cos(self.angle-self.innerAngle),self.y+self.length*math.sin(self.angle-self.innerAngle)]
+        
         
     def turn(self,x):
         self.angle = self.angle+x

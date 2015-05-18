@@ -7,6 +7,7 @@ import json
 import time
 
 localPort = 8000
+localHost = "localhost" # change to "" to run over outside network
 connected_peers = []
 connection_ports = []
 
@@ -16,7 +17,7 @@ def broadcast(message):
   for peer in connected_peers:
     peer.send(m)
     
-def receive_message():
+def receive_message(handler):
   while True:
     if (not any(connected_peers)):
       time.sleep(1)
@@ -31,8 +32,9 @@ def receive_message():
       break
     
     for s in inputready:
-      d = s.recv(1024)
-      print(d)
+      buf = s.recv(1024)
+      m = json.loads(buf.decode("UTF-8"))
+      handler.dispatch(m)
   print("Receiver Stopped")
   
 def parseArgs(argv):
@@ -94,6 +96,8 @@ class Keyboard_Monitor(threading.Thread):
         send_connection_request()
       elif (i == "2"):
         broadcast({"type": "play"})
+      elif i == "3":
+        broadcast({"type": "a"})
       else:
         print("Unknown Request")
     
@@ -103,7 +107,7 @@ class Receive_Connection(threading.Thread):
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   
   def run(self):
-    self.socket.bind(("", localPort))
+    self.socket.bind((localHost, localPort))
     self.socket.listen(10)
     
     while True:
@@ -146,19 +150,30 @@ def print_menu():
   print("1....Send connection request")
   print("2....Play")
     
-if __name__ == "__main__":
-  parseArgs(sys.argv[1:])
-  
+class TestClass():
+  def dispatch(self, m):
+    if m["type"] == "a":
+      self.a(m)
+
+  def a(self, m):
+    print ("This ran a")
+    
+def main(c):
   t1 = Keyboard_Monitor()
   t1.start()
   
   t2 = Receive_Connection()
   t2.start()
   
-  t3 = threading.Thread(target=receive_message)
+  t3 = threading.Thread(target=receive_message,args=(c,))
   t3.start()
   
   t1.join()
   t2.join()
   t3.join()
+    
+if __name__ == "__main__":
+  parseArgs(sys.argv[1:])
+  
+  main(TestClass())
   
