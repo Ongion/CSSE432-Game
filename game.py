@@ -49,6 +49,7 @@ class GameState:
     self.spriteShips = pygame.sprite.Group()
     self.spriteLasers = pygame.sprite.Group()
     self.playRequests = []
+    self.frame =0
     #we won't know our number until a play transaction has transpired
     self.id = None
     
@@ -106,19 +107,20 @@ class GameState:
       self.spriteLasers.draw(screen)
       pygame.display.flip()
       clock.tick(60)
+      self.frame +=1
     
   def dispatch(self, m):
     if "type" in m:
       if m["type"] == "play":
         self.playCommand(m)
       elif m["type"] == "shipLocation":
-        self.ships[m["id"]].x = m["x"]
-        self.ships[m["id"]].y = m["y"]
+        self.ships[m["id"]].x = m["x"]+(self.frame-m["frame"])*m["vX"]
+        self.ships[m["id"]].y = m["y"]+(self.frame-m["frame"])*m["vY"]
         self.ships[m["id"]].vX = m["vX"]
         self.ships[m["id"]].vY = m["vY"]
         self.ships[m["id"]].angle = m["angle"]
       elif m["type"] == "laserCreation":
-        laser = Laser(self,m["x"],m["y"],m["angle"],m["playerNum"])
+        laser = Laser(self,m["x"]+(self.frame-m["frame"])*m["vX"],m["y"]+(self.frame-m["frame"])*m["vY"],m["angle"],m["playerNum"])
         self.spriteLasers.add(laser)
         self.lasers.append(laser)
       else:
@@ -162,7 +164,7 @@ class GameState:
     if self.update_count >= GLOBAL_FRAME_RATE:
       self.update_count = 0
       #print("broadcasting location")
-      self.gameManager.broadcast({"type": "shipLocation","id":self.id,"x":self.ships[self.id].x,"y":self.ships[self.id].y,"angle":self.ships[self.id].angle,"vX":self.ships[self.id].vX,"vY":self.ships[self.id].vY})
+      self.gameManager.broadcast({"type": "shipLocation","id":self.id,"x":self.ships[self.id].x,"y":self.ships[self.id].y,"angle":self.ships[self.id].angle,"vX":self.ships[self.id].vX,"vY":self.ships[self.id].vY,"frame":self.frame})
       time.sleep(0.1)
     
   def calculateMove(self,event):
