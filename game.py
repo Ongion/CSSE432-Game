@@ -120,7 +120,11 @@ class GameState:
         self.ships[m["id"]].vY = m["vY"]
         self.ships[m["id"]].angle = m["angle"]
       elif m["type"] == "laserCreation":
-        laser = Laser(self,m["x"]+(self.frame-m["frame"])*m["vX"],m["y"]+(self.frame-m["frame"])*m["vY"],m["angle"],m["playerNum"])
+        print("My frame: " + str(self.frame))
+        print("Their frame: " + str(m["frame"]))
+        laser = Laser(self,m["x"],m["y"],m["angle"],m["playerNum"])
+        for i in range(0, self.frame - m["frame"]):
+          laser.update()
         self.spriteLasers.add(laser)
         self.lasers.append(laser)
       else:
@@ -278,7 +282,7 @@ class Laser(pygame.sprite.Sprite):
     
     #if we are the on shooting, we need to tell everybody
     if playerNum == self.game.id:
-      self.game.gameManager.broadcast({"type": "laserCreation", "x": self.x, "y": self.y, "angle": self.angle, "playerNum": self.playerNum})
+      self.game.gameManager.broadcast({"type": "laserCreation", "x": self.x, "y": self.y, "angle": self.angle, "playerNum": self.playerNum, "frame": self.game.frame})
   
   def points1(self):
     return (LASER_LENGTH/2 - LASER_LENGTH/2*math.cos(self.angle),LASER_LENGTH/2-LASER_LENGTH/2*math.sin(self.angle))
