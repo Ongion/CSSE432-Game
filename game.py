@@ -3,6 +3,7 @@ import networking
 import threading
 import multiprocessing
 import time
+import json
 
 WIDTH = 900
 HEIGHT = 900
@@ -111,6 +112,8 @@ class GameState:
     
   def dispatch(self, m):
     if "type" in m:
+      if m["type"] == "setID":
+        self.id = m["id"]
       if m["type"] == "play":
         self.playCommand(m)
       elif m["type"] == "shipLocation":
@@ -148,6 +151,12 @@ class GameState:
       #theoretically, they would be ordered, but we have no guarantees...unless we sort it
       self.playRequests.sort()
       self.id = self.playRequests.index(self.my_time)
+      # If I am the first id (only one client should see this because they wait a bit before broadcasting to everyone else), then I set the ids!
+      if (self.id == 0):
+        i = 1
+        for peer in self.gameManager.connected_peers:
+          peer.send(bytes(json.dumps({"type": "setID", "id": i}),'UTF-8'))
+          i += 1
       #we are no longer listening for commands from our keyboard for setting up connections/sending requests
       time_to_wait = 3 - (time.time() - self.playRequests[-1])
       print(time_to_wait)
