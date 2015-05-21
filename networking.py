@@ -41,7 +41,7 @@ class Receive_Connection(threading.Thread):
           s1.send(bytes(json.dumps({"type": "connection_request", "peers" : [], "me" : (self.gameManager.localHost,self.gameManager.localPort)}), 'UTF-8'))
           buf = s1.recv(1024)
           self.gameManager.connected_peers.append(s1)
-        connection.sendall(bytes(json.dumps({"type": "connection_response", "peers" : connection_ports}), 'UTF-8'))
+        connection.sendall(bytes(json.dumps({"type": "connection_response", "peers" : self.gameManager.connection_ports}), 'UTF-8'))
         self.gameManager.connected_peers.append(connection)
         self.gameManager.connection_ports.extend(response["peers"])
         self.gameManager.connection_ports.append(response["me"])
@@ -88,6 +88,9 @@ class GameManager():
       except socket.error as err:
         print("SELECT error: {0}".format(err))
         break
+
+      #time.sleep(1)
+      
       for s in inputready:
         try:
           buf = s.recv(1024)
@@ -150,7 +153,7 @@ class GameManager():
       for other_peer in response["peers"]:
         s1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s1.connect((other_peer[0],other_peer[1]))
-        s1.send(bytes(json.dumps({"type": "connection_finish", "peers" : connection_ports, "me" : (localHost,localPort)}), 'UTF-8'))
+        s1.send(bytes(json.dumps({"type": "connection_finish", "peers" : self.connection_ports, "me" : (self.localHost,self.localPort)}), 'UTF-8'))
         buf = s1.recv(1024)
         self.connected_peers.append(s1)
         #ignore the response of the others (we don't really care what they have to say)
