@@ -121,8 +121,8 @@ class GameState:
       elif m["type"] == "play":
         self.playCommand(m)
       elif m["type"] == "shipLocation":
-        if m["frame"] < self.frame:
-             self.frame = m["frame"]
+        #if m["frame"] > self.frame:
+         #    self.frame = m["frame"]
         self.ships[m["id"]].x = m["x"]
         self.ships[m["id"]].y = m["y"]
         for i in range(0, self.frame - m["frame"]):
