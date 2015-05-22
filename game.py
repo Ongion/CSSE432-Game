@@ -51,6 +51,7 @@ class GameState:
     self.spriteLasers = pygame.sprite.Group()
     self.playRequests = []
     self.frame =0
+    self.start = False
     #we won't know our number until a play transaction has transpired
     self.id = None
     
@@ -74,6 +75,7 @@ class GameState:
     print("2....Play")
     
   def run(self):
+    self.start = True
     centerX = self.width/2
     centerY = self.height/2
     numPlayers = len(self.playRequests)
@@ -94,7 +96,9 @@ class GameState:
     self.spriteShips.draw(screen)
     pygame.display.flip()
 
-
+    print(self.id)
+    print("--------")
+    print(self.ships[self.id].playerNum)
     while True:
       for event in pygame.event.get():#30
         if event.type==pygame.locals.QUIT:#31
@@ -114,20 +118,28 @@ class GameState:
     if "type" in m:
       if m["type"] == "setID":
         self.id = m["id"]
-      if m["type"] == "play":
+      elif m["type"] == "play":
         self.playCommand(m)
       elif m["type"] == "shipLocation":
-        self.ships[m["id"]].x = m["x"]+(self.frame-m["frame"])*m["vX"]
-        self.ships[m["id"]].y = m["y"]+(self.frame-m["frame"])*m["vY"]
+        if m["frame"] < self.frame:
+             self.frame = m["frame"]
+        self.ships[m["id"]].x = m["x"]
+        self.ships[m["id"]].y = m["y"]
+        for i in range(0, self.frame - m["frame"]):
+          self.ships[m["id"]].update()
         self.ships[m["id"]].vX = m["vX"]
         self.ships[m["id"]].vY = m["vY"]
         self.ships[m["id"]].angle = m["angle"]
       elif m["type"] == "laserCreation":
+        if m["frame"] > self.frame:
+             self.frame = m["frame"]
         print("My frame: " + str(self.frame))
         print("Their frame: " + str(m["frame"]))
+
         laser = Laser(self,m["x"],m["y"],m["angle"],m["playerNum"])
         for i in range(0, self.frame - m["frame"]):
           laser.update()
+        print(str(laser.x) + "  " + str(laser.y))
         self.spriteLasers.add(laser)
         self.lasers.append(laser)
       else:
@@ -161,7 +173,8 @@ class GameState:
       time_to_wait = 3 - (time.time() - self.playRequests[-1])
       print(time_to_wait)
       time.sleep(time_to_wait)
-      self.run()
+      if self.start==False:
+        self.run()
       
   def update(self):
     for ship in self.ships:
@@ -191,6 +204,7 @@ class GameState:
     elif event.key == 274:#DOWN
       accel = -.01
     elif event.key == 32:
+      
       laser = Laser(self,game.ships[self.id].rect.centerx,game.ships[self.id].rect.centery,game.ships[self.id].angle,game.ships[self.id].playerNum)
       self.spriteLasers.add(laser)
       self.lasers.append(laser)
